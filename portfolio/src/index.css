@@ -91,6 +91,7 @@
 
   html, body {
     cursor: none; /* For custom cursor */
+    scroll-behavior: smooth;
   }
   
   a, button, input, textarea, select {

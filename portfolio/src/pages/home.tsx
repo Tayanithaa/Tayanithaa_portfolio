@@ -107,7 +107,8 @@ function CustomCursor() {
 }
 
 // ==========================================
-// BACKGROUNDS
+// ==========================================
+// SUPER ANIMATED BACKGROUND
 // ==========================================
 function ParticleBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -130,15 +131,15 @@ function ParticleBackground() {
 
     const initParticles = () => {
       particles = [];
-      const numParticles = Math.floor((window.innerWidth * window.innerHeight) / 12000);
-      for (let i = 0; i < Math.min(numParticles, 120); i++) {
+      const numParticles = Math.floor((window.innerWidth * window.innerHeight) / 10000);
+      for (let i = 0; i < Math.min(numParticles, 150); i++) {
         particles.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          vx: (Math.random() - 0.5) * 0.5,
-          vy: (Math.random() - 0.5) * 0.5,
-          radius: Math.random() * 1.5 + 0.5,
-          color: Math.random() > 0.3 ? "rgba(0, 212, 255, 0.5)" : "rgba(157, 78, 221, 0.5)"
+          vx: (Math.random() - 0.5) * 0.8,
+          vy: (Math.random() - 0.5) * 0.8,
+          radius: Math.random() * 2 + 0.8,
+          color: Math.random() > 0.4 ? "rgba(0, 212, 255, 0.8)" : "rgba(157, 78, 221, 0.8)"
         });
       }
     };
@@ -157,15 +158,18 @@ function ParticleBackground() {
         const dx = mouseRef.current.x - p.x;
         const dy = mouseRef.current.y - p.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 120) {
+        if (dist < 180) {
           p.x += (dx / dist) * 1.5;
           p.y += (dy / dist) * 1.5;
         }
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = p.color;
         ctx.fillStyle = p.color;
         ctx.fill();
+        ctx.shadowBlur = 0; // Reset for lines
 
         for (let j = i + 1; j < particles.length; j++) {
           const p2 = particles[j];
@@ -173,11 +177,11 @@ function ParticleBackground() {
           const dy2 = p.y - p2.y;
           const dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
 
-          if (dist2 < 120) {
+          if (dist2 < 140) {
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = `rgba(0, 212, 255, ${0.15 * (1 - dist2 / 120)})`;
+            ctx.strokeStyle = p.color.replace('0.8', `${0.25 * (1 - dist2 / 140)}`);
             ctx.stroke();
           }
         }
@@ -209,7 +213,7 @@ function ParticleBackground() {
     };
   }, []);
 
-  return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-[-1] opacity-70" />;
+  return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-[0] opacity-80" />;
 }
 
 function Spotlight() {
@@ -217,6 +221,7 @@ function Spotlight() {
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
+      // Smooth lerping could be added here, but direct follow is snappier for spotlight
       setPosition({ x: e.clientX, y: e.clientY });
     };
     window.addEventListener("mousemove", handleMouseMove);
@@ -224,12 +229,36 @@ function Spotlight() {
   }, []);
 
   return (
-    <div
-      className="fixed inset-0 pointer-events-none z-[-1]"
-      style={{
-        background: `radial-gradient(500px circle at ${position.x}px ${position.y}px, rgba(0, 212, 255, 0.05), transparent 80%)`
-      }}
-    />
+    <>
+      {/* Interactive Cursor Spotlight */}
+      <div
+        className="fixed inset-0 pointer-events-none z-[-1] transition-opacity duration-300"
+        style={{
+          background: `radial-gradient(600px circle at ${position.x}px ${position.y}px, rgba(0, 212, 255, 0.08), transparent 80%)`
+        }}
+      />
+      {/* Ambient Drifting Orbs */}
+      <div className="fixed inset-0 pointer-events-none z-[-2] overflow-hidden">
+        <motion.div 
+          animate={{ 
+            x: [0, 100, -50, 0],
+            y: [0, -100, 50, 0],
+            scale: [1, 1.2, 0.8, 1]
+          }}
+          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+          className="absolute top-[10%] left-[20%] w-[500px] h-[500px] rounded-full blur-[120px] opacity-20 bg-primary/40"
+        />
+        <motion.div 
+          animate={{ 
+            x: [0, -120, 80, 0],
+            y: [0, 100, -60, 0],
+            scale: [1, 0.9, 1.3, 1]
+          }}
+          transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+          className="absolute bottom-[20%] right-[10%] w-[600px] h-[600px] rounded-full blur-[150px] opacity-15 bg-secondary/40"
+        />
+      </div>
+    </>
   );
 }
 
@@ -437,11 +466,11 @@ function Hero() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1.4, delay: 0.15 }}
-        className="absolute right-0 top-[4%] w-[48%] lg:w-[44%] xl:w-[41%] h-[96%] pointer-events-none select-none scale-90 origin-bottom-right"
+        className="absolute right-0 top-[4%] w-[48%] lg:w-[44%] xl:w-[41%] h-[96%] pointer-events-none select-none scale-85 origin-bottom-right"
       >
         {/* Ambient bloom — subtle only */}
-        <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 65% 45% at 55% 88%, rgba(0,212,255,0.10) 0%, transparent 68%)' }} />
-        <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 50% 38% at 35% 93%, rgba(139,92,246,0.08) 0%, transparent 65%)' }} />
+        {/* <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 65% 45% at 55% 88%, rgba(0,212,255,0.10) 0%, transparent 68%)' }} /> */}
+        {/* <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 50% 38% at 35% 93%, rgba(139,92,246,0.08) 0%, transparent 65%)' }} /> */}
 
         {/* Floating + parallax wrapper */}
         <div ref={photoRef} className="w-full h-full" style={{ willChange: 'transform' }}>
@@ -531,8 +560,9 @@ function Hero() {
 function SectionHeading({ children, title, icon: Icon }: { children?: React.ReactNode, title: string, icon: React.ElementType }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, y: 30, filter: "blur(5px)" }}
+      whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
       viewport={{ once: true, margin: "-100px" }}
       className="flex items-center gap-4 mb-16"
     >
@@ -553,8 +583,9 @@ function AboutEducation() {
 
           {/* About Me */}
           <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, x: -40, filter: "blur(5px)" }}
+            whileInView={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
             viewport={{ once: true }}
           >
             <SectionHeading title="About Me" icon={Terminal} />
@@ -577,8 +608,9 @@ function AboutEducation() {
           {/* Education */}
           <motion.div
             id="education"
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, x: 40, filter: "blur(5px)" }}
+            whileInView={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+            transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
             viewport={{ once: true }}
             className="lg:pl-[20%]"
           >
@@ -1537,7 +1569,6 @@ const TYPEWRITER_ROLES = [
 ];
 
 function LandingPage({ onEnter }: { onEnter: () => void }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [roleIdx, setRoleIdx] = useState(0);
   const [displayed, setDisplayed] = useState("");
   const [deleting, setDeleting] = useState(false);
@@ -1570,64 +1601,14 @@ function LandingPage({ onEnter }: { onEnter: () => void }) {
     return () => clearTimeout(timer);
   }, [charIdx, deleting, roleIdx]);
 
-  // Particle canvas
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    let animId: number;
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resize();
-    window.addEventListener("resize", resize);
-
-    const count = 90;
-    const particles = Array.from({ length: count }, () => ({
-      x: Math.random() * window.innerWidth,
-      y: Math.random() * window.innerHeight,
-      r: Math.random() * 1.4 + 0.3,
-      vx: (Math.random() - 0.5) * 0.35,
-      vy: (Math.random() - 0.5) * 0.35,
-      alpha: Math.random() * 0.5 + 0.15,
-    }));
-
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      particles.forEach(p => {
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.x < 0) p.x = canvas.width;
-        if (p.x > canvas.width) p.x = 0;
-        if (p.y < 0) p.y = canvas.height;
-        if (p.y > canvas.height) p.y = 0;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(0,212,255,${p.alpha})`;
-        ctx.fill();
-      });
-      animId = requestAnimationFrame(draw);
-    };
-    draw();
-    return () => {
-      cancelAnimationFrame(animId);
-      window.removeEventListener("resize", resize);
-    };
-  }, []);
+  // No more custom canvas here, we use the global ParticleBackground
 
   return (
     <motion.div
-      className="fixed inset-0 z-[200] flex items-center justify-center overflow-hidden"
-      style={{ background: "radial-gradient(ellipse 120% 100% at 50% 110%, #010d1a 0%, #000507 55%, #000000 100%)" }}
-      exit={{ opacity: 0, scale: 1.04 }}
-      transition={{ duration: 0.85, ease: "easeInOut" }}
+      className="fixed inset-0 z-[200] flex items-center justify-center overflow-hidden bg-transparent"
+      exit={{ opacity: 0, scale: 1.1, filter: "blur(15px)" }}
+      transition={{ duration: 1.0, ease: [0.22, 1, 0.36, 1] }}
     >
-      {/* Particle canvas */}
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
-
       {/* Ambient radial glows */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] rounded-full blur-3xl opacity-20"
@@ -1771,6 +1752,10 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground font-sans overflow-x-hidden selection:bg-primary/30 selection:text-white">
       <CustomCursor />
+      
+      {/* Backgrounds run globally across the entire site */}
+      <ParticleBackground />
+      <Spotlight />
 
       <AnimatePresence mode="wait">
         {!hasEntered && (
@@ -1781,12 +1766,10 @@ export default function Home() {
       {hasEntered && (
         <motion.div
           key="portfolio"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.7, ease: "easeOut" }}
+          initial={{ opacity: 0, filter: "blur(10px)", y: 20 }}
+          animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+          transition={{ duration: 1.2, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
         >
-          <ParticleBackground />
-          <Spotlight />
           <ScrollProgress />
           <Navbar />
           <main>
